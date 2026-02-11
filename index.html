@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turnos - Hospital San Felipe</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        input, select, button { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
+        button { background-color: #25d366; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #128c7e; }
+        .footer { text-align: center; font-size: 0.8em; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Solicitar Turno</h2>
+    <form id="turnoForm">
+        <label>Nombre y Apellido</label>
+        <input type="text" id="nombre" placeholder="Ej: Juan Pérez" required>
+
+        <label>DNI</label>
+        <input type="number" id="dni" placeholder="Sin puntos" required>
+
+        <label>Obra Social / Mutual</label>
+        <select id="mutual" required>
+            <option value="" disabled selected>Seleccione su mutual</option>
+            <option value="OSFATLYF">OSFATLYF</option>
+            <option value="PAMI">PAMI</option>
+            <option value="IOMA">IOMA</option>
+            <option value="PARTICULAR">Particular / Otra</option>
+        </select>
+
+        <label>Motivo (Opcional)</label>
+        <input type="text" id="motivo" placeholder="Ej: Control, Ecografía">
+
+        <button type="submit">PEDIR TURNO POR WHATSAPP</button>
+    </form>
+    <div class="footer">Se abrirá WhatsApp para confirmar el mensaje.</div>
+</div>
+
+<script>
+    document.getElementById('turnoForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const nombre = document.getElementById('nombre').value;
+        const dni = document.getElementById('dni').value;
+        const mutual = document.getElementById('mutual').value;
+        const motivo = document.getElementById('motivo').value || "Consulta General";
+        
+        // REEMPLAZAR con el número de la secretaría o el tuyo (con código de país)
+        const nroTelefono = "5493364676933"; 
+
+        const mensaje = `*SOLICITUD DE TURNO*%0A` +
+                        `*Nombre:* ${nombre}%0A` +
+                        `*DNI:* ${dni}%0A` +
+                        `*Mutual:* ${mutual}%0A` +
+                        `*Motivo:* ${motivo}%0A` +
+                        `_Enviado desde el portal de turnos._`;
+
+        window.open(`https://wa.me/${nroTelefono}?text=${mensaje}`, '_blank');
+    });
+</script>
+
+</body>
+</html>
