@@ -3,145 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turnos Urología - Hosp. San Felipe</title>
+    <title>Turnos Urología San Felipe</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f0f2f5; color: #1c1e21; }
-        .container { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { color: #075e54; text-align: center; margin-top: 0; }
-        .badge { background: #25d366; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8em; display: inline-block; margin-bottom: 15px; }
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.9em; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background-color: #25d366; color: white; border: none; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 25px; transition: 0.3s; }
-        button:hover { background-color: #128c7e; }
-        button:disabled { background-color: #ccc; }
-        .nota { font-size: 0.8em; color: #666; margin-top: 15px; line-height: 1.4; border-top: 1px solid #eee; padding-top: 10px; }
+        .feriado-arg { background-color: #fef08a !important; color: #854d0e !important; border-radius: 50%; }
+        /* Animación para resaltar el campo de fecha si no lo ven */
+        .resaltar { border: 2px solid #2563eb !important; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
-<body>
+<body class="bg-slate-200 min-h-screen flex items-center justify-center p-4">
 
-<div class="container">
-    <div class="badge">Atención Profesional</div>
-    <h2>Solicitud de Turno</h2>
-    
-    <form id="turnoForm">
-        <label>Nombre y Apellido</label>
-        <input type="text" id="nombre" placeholder="Nombre completo" required>
+    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-blue-600">
+        <h2 class="text-xl font-black text-center text-slate-800 mb-6 uppercase">Agenda de Turnos</h2>
 
-        <label>DNI</label>
-        <input type="number" id="dni" placeholder="Sin puntos ni espacios" required>
+        <form id="appointmentForm" onsubmit="enviarTurno(event)" class="space-y-4">
+            
+            <input type="text" id="nombre" placeholder="Nombre del Paciente" required class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 bg-slate-50">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <input type="number" id="dni" placeholder="DNI" required class="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 bg-slate-50">
+                <select id="mutual" class="w-full p-4 border border-slate-200 rounded-2xl outline-none bg-slate-50">
+                    <option value="PARTICULAR">Particular</option>
+                    <option value="OSFATLYF">OSFATLYF</option>
+                    <option value="PAMI">PAMI</option>
+                    <option value="IOMA">IOMA</option>
+                </select>
+            </div>
 
-        <label>Obra Social / Mutual</label>
-        <select id="mutual" required>
-            <option value="OSFATLYF">OSFATLYF</option>
-            <option value="PAMI">PAMI</option>
-            <option value="IOMA">IOMA</option>
-            <option value="PARTICULAR">Particular / Otra</option>
-        </select>
+            <div class="bg-blue-600 p-1 rounded-2xl">
+                <input type="text" id="fecha" readonly placeholder="CLIC AQUÍ PARA ELEGIR DÍA" 
+                       class="w-full p-4 bg-white rounded-xl text-center font-black text-blue-700 cursor-pointer border-none outline-none">
+            </div>
 
-        <label>Seleccione el Día</label>
-        <input type="date" id="fecha" required>
+            <div id="slotSection" class="hidden border-2 border-dashed border-slate-200 p-4 rounded-2xl">
+                <p class="text-[10px] font-bold text-slate-400 text-center mb-2 uppercase">Horarios Libres:</p>
+                <div id="gridHorarios" class="grid grid-cols-3 gap-2"></div>
+            </div>
 
-        <label>Horarios Disponibles (15 min)</label>
-        <select id="hora" required>
-            <option value="">Primero elija un día...</option>
-        </select>
+            <button type="submit" class="w-full bg-green-600 text-white py-5 rounded-2xl font-black hover:bg-green-700 shadow-xl transition-all uppercase tracking-widest">
+                Confirmar por WhatsApp
+            </button>
+        </form>
+    </div>
 
-        <button type="submit" id="btnEnviar">SOLICITAR POR WHATSAPP</button>
-    </form>
-    <p class="nota"><b>Días de atención:</b><br>Lun. y Mié. (15-20hs) | Vie. (10-14hs).<br>El sistema bloquea feriados y turnos ya tomados.</p>
-</div>
+    <script>
+        // CONFIGURACIÓN (Verifica que tu URL de Google sea correcta)
+        const MI_WHATSAPP = "5493364XXXXXX"; 
+        const MI_APPSCRIPT_URL = "TU_URL_DE_GOOGLE"; 
 
-<script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxdvrVef8ZMi7PrS07ZJG4UnYhCyIYbQMYaol7YVV7sTo6FNSOlyI4Oost9m11tnuvQwg/exec'; // <--- PEGA LA URL DE TU SCRIPT DE GOOGLE AQUÍ
-    const nroTel = "5493364676933"; // <--- CAMBIA POR TU NÚMERO (Cód. País + Cód. Área + Número)
-    
-    let ocupados = [];
-    const feriados2026 = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-04-02", "2026-04-03", "2026-05-01", "2026-05-25", "2026-06-15", "2026-06-20", "2026-07-09", "2026-08-17", "2026-10-12", "2026-11-23", "2026-12-08", "2026-12-25"];
+        const feriados2026 = ["2026-01-01", "2026-02-16", "2026-02-17", "2026-03-24", "2026-04-02", "2026-04-03", "2026-05-01", "2026-05-25", "2026-06-20", "2026-07-09", "2026-12-08", "2026-12-25"];
+        let horaSeleccionada = "";
 
-    async function cargarOcupados() {
-        try {
-            const response = await fetch(scriptURL);
-            ocupados = await response.json();
-        } catch (e) { console.error("Error cargando disponibilidad", e); }
-    }
-    cargarOcupados();
-
-    const fechaInput = document.getElementById('fecha');
-    const horaSelect = document.getElementById('hora');
-    fechaInput.min = new Date().toISOString().split("T")[0];
-
-    fechaInput.addEventListener('change', function() {
-        const sel = this.value;
-        const fechaObj = new Date(sel + "T00:00:00");
-        const diaSemana = fechaObj.getDay(); 
-        const [anio, mes, dia] = sel.split('-');
-        const fechaArgentina = `${dia}/${mes}/${anio}`;
-
-        if (feriados2026.includes(sel)) {
-            alert("El día seleccionado es feriado.");
-            this.value = ""; return;
-        }
-
-        horaSelect.innerHTML = '';
-        let bloques = [];
-        if (diaSemana === 1 || diaSemana === 3) bloques = generarIntervalos("15:00", "20:00");
-        else if (diaSemana === 5) bloques = generarIntervalos("10:00", "14:00");
-        else { alert("Solo atendemos Lunes, Miércoles y Viernes."); this.value = ""; return; }
-
-        bloques.forEach(h => {
-            let opt = document.createElement('option');
-            opt.value = h;
-            if (ocupados.includes(fechaArgentina + " " + h)) {
-                opt.innerText = h + " hs (OCUPADO)";
-                opt.disabled = true;
-            } else {
-                opt.innerText = h + " hs";
-            }
-            horaSelect.appendChild(opt);
-        });
-    });
-
-    function generarIntervalos(inicio, fin) {
-        let lista = [];
-        let [h, m] = inicio.split(':').map(Number);
-        let [hF, mF] = fin.split(':').map(Number);
-        let actual = new Date(); actual.setHours(h, m, 0);
-        let limite = new Date(); limite.setHours(hF, mF, 0);
-        while (actual < limite) {
-            lista.push(actual.getHours().toString().padStart(2, '0') + ":" + actual.getMinutes().toString().padStart(2, '0'));
-            actual.setMinutes(actual.getMinutes() + 15);
-        }
-        return lista;
-    }
-
-    document.getElementById('turnoForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btnEnviar');
-        btn.disabled = true; btn.innerText = "Registrando turno...";
-
-        const fechaRaw = document.getElementById('fecha').value;
-        const [anio, mes, dia] = fechaRaw.split('-');
-        const fechaLocal = `${dia}/${mes}/${anio}`;
-        const horaVal = document.getElementById('hora').value;
-
-        const data = {
-            nombre: document.getElementById('nombre').value,
-            dni: document.getElementById('dni').value,
-            mutual: document.getElementById('mutual').value,
-            fecha: fechaLocal,
-            hora: horaVal
+        // INICIALIZACIÓN CON RETARDO PARA EVITAR ERRORES EN GITHUB
+        window.onload = function() {
+            setTimeout(() => {
+                flatpickr("#fecha", {
+                    locale: "es",
+                    minDate: "today",
+                    dateFormat: "Y-m-d",
+                    disable: [
+                        function(date) {
+                            const d = date.getDay();
+                            const s = date.toISOString().split('T')[0];
+                            return (d === 0 || d === 2 || d === 4 || d === 6 || feriados2026.includes(s));
+                        }
+                    ],
+                    onDayCreate: (d, s, f, el) => {
+                        if (feriados2026.includes(el.dateObj.toISOString().split('T')[0])) el.classList.add("feriado-arg");
+                    },
+                    onChange: (sel, str) => {
+                        buscarHoras(str);
+                    }
+                });
+            }, 500); // Espera medio segundo para asegurar que la librería cargó
         };
 
-        try {
-            await fetch(scriptURL, { method: 'POST', body: JSON.stringify(data) });
-            const msj = `*SOLICITUD DE TURNO*%0A*Paciente:* ${data.nombre}%0A*DNI:* ${data.dni}%0A*Mutual:* ${data.mutual}%0A*Fecha:* ${data.fecha}%0A*Hora:* ${data.hora} hs`;
-            window.open(`https://wa.me/${nroTel}?text=${msj}`, '_blank');
-            setTimeout(() => { location.reload(); }, 2000);
-        } catch (error) {
-            alert("Error al registrar. Intente de nuevo.");
-            btn.disabled = false; btn.innerText = "SOLICITAR POR WHATSAPP";
+        async function buscarHoras(fecha) {
+            const grid = document.getElementById('gridHorarios');
+            document.getElementById('slotSection').classList.remove('hidden');
+            grid.innerHTML = "<p class='col-span-3 text-center text-xs'>Cargando...</p>";
+
+            const turnos = ["15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45"];
+
+            try {
+                const r = await fetch(`${MI_APPSCRIPT_URL}?fecha=${fecha}`);
+                const ocupados = await r.json();
+                grid.innerHTML = "";
+                turnos.forEach(h => {
+                    const estaOcupado = ocupados.includes(h);
+                    const b = document.createElement('button');
+                    b.type = "button";
+                    b.innerText = h;
+                    b.className = estaOcupado ? "p-3 bg-red-50 text-red-200 rounded-xl text-xs font-bold cursor-not-allowed" : "p-3 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold border border-blue-100 hover:bg-blue-600 hover:text-white";
+                    if(!estaOcupado) b.onclick = () => {
+                        horaSeleccionada = h;
+                        document.querySelectorAll('#gridHorarios button').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
+                        b.classList.add('bg-blue-600', 'text-white');
+                    };
+                    grid.appendChild(b);
+                });
+            } catch(e) { grid.innerHTML = "<p class='col-span-3 text-center'>Error de conexión</p>"; }
         }
-    });
-</script>
+
+        function enviarTurno(e) {
+            e.preventDefault();
+            if(!horaSeleccionada) return alert("Elige una hora azul");
+
+            const n = document.getElementById('nombre').value;
+            const d = document.getElementById('dni').value;
+            const m = document.getElementById('mutual').value;
+            const f = document.getElementById('fecha').value;
+
+            // Registro en Google
+            fetch(MI_APPSCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({nombre:n, dni:d, mutual:m, fecha:f, hora:horaSeleccionada}) });
+
+            // WhatsApp
+            const txt = `*NUEVO TURNO*\n\n*Paciente:* ${n}\n*DNI:* ${d}\n*Mutual:* ${m}\n*Fecha:* ${f}\n*Hora:* ${horaSeleccionada}`;
+            window.open(`https://api.whatsapp.com/send?phone=${MI_WHATSAPP}&text=${encodeURIComponent(txt)}`, '_blank');
+        }
+    </script>
 </body>
 </html>
